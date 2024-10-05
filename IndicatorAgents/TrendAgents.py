@@ -1,11 +1,12 @@
+import yfinance as yf
 from CalculateTechnicals import TrendIndicators
 
 
 class HeikinAshiAgent:
+   
     def __init__(self, df, params):
         self.df = TrendIndicators(df)
         self.params = params
-        self.indicator = TrendIndicators(df)
 
     def generate_signal(self):
         stop_loss = self.params.get('stop_loss', 3)
@@ -13,45 +14,62 @@ class HeikinAshiAgent:
         return self.df['HA signals']
 
     def adjust_parameters(self, market_conditions):
-        # Adjust stop_loss based on volatility (example heuristic)
-        volatility = market_conditions.get('volatility', 1)
-        if volatility > 1.5:
-            self.params['stop_loss'] += 1
-        else:
-            self.params['stop_loss'] = max(1, self.params['stop_loss'] - 1)
-        return self.params
-
+       pass
+      # return self.params
 
 class ParabolicSARAgent:
     def __init__(self, df, params):
-        self.df = df
+        self.df = TrendIndicators(df)
         self.params = params
-        # Assuming TrendIndicators has Parabolic SAR logic
-        self.indicator = TrendIndicators(df)
 
     def generate_signal(self):
         initial_af = self.params.get('initial_af', 0.02)
         step_af = self.params.get('step_af', 0.02)
         end_af = self.params.get('end_af', 0.2)
-        self.df = self.indicator.parabolic_sar_signal_generation(
+        self.df.parabolic_sar_signal_generation(
             initial_af=initial_af, step_af=step_af, end_af=end_af)
         return self.df['sar signals']
 
     def adjust_parameters(self, market_conditions):
-        # Adjust parameters based on market conditions
-        trend_strength = market_conditions.get('trend_strength', 0.5)
-        if trend_strength > 0.7:
-            self.params['initial_af'] += 0.01
-        else:
-            self.params['initial_af'] = max(
-                0.01, self.params['initial_af'] - 0.01)
-        return self.params
+        pass
+        #return self.params
 
+class MACDAgent:
+    def __init__(self, df, params):
+        self.df = TrendIndicators(df)
+        self.params = params
+
+    def generate_signal(self):
+        ma_type = self.params.get('ma_type', 'ema')
+        ma1 = self.params.get(ma1, 12)
+        ma2 = self.params.get(ma2, 26)
+        signal = self.params.get(signal, 9)
+        self.df.macd_signal_generation(ma_type, ma1, ma2, signal)
+        return self.df['macd signals']
+
+    def adjust_parameters(self, market_conditions):
+        pass # return self.params
+
+class GDAgent:
+    def __init__(self, df, params):
+        self.df = TrendIndicators(df)
+        self.params = params
+    
+    def generate_signal(self):
+        short_window = self.params.get('short_window', 50)
+        long_window = self.params.get('long_window', 200)
+        ma_type = self.params.get('ma_type', 'sma')
+        self.df.golden_death_cross_signal_generation(short_window, long_window, ma_type)
+        return self.df['golden death cross signal']
+
+    def adjust_parameters(self, market_conditions):
+        pass # return self.params
+        
 
 class TrendIndicatorAgent:
     def __init__(self, df, indicator_agents):
         self.df = df
-        self.indicator_agents = indicator_agents  # List of individual agent classes
+        self.indicator_agents = indicator_agents  
 
     def generate_signals(self):
         signals = {}
@@ -81,3 +99,23 @@ class TrendIndicatorAgent:
             return 'sell'
         else:
             return 'hold'
+
+def main():
+    df = yf.download("NVDA")
+
+    ha_params = {'stop_loss': 3}
+    ha_agent = HeikinAshiAgent(df, ha_params)
+
+    sar_params = {'initial_af': 0.02, 'step_af': 0.02, 'end_af': 0.2}
+    sar_agent = ParabolicSARAgent(df, sar_params)
+
+    macd_params = {'ma_type': 'ema', 'ma1': 12, 'ma2': 26, 'signal': 9}
+    macd_agent = MACDAgent(df, macd_params)
+
+    gd_params = {'short_window': 50, 'long_window': 200, 'ma_type': 'sma'}
+    gd_agent = GDAgent(df, gd_params)
+
+    trend_agent = TrendIndicatorAgent([ha_agent, sar_agent, macd_agent, gd_agent])
+
+if __name__ == '__main__':
+    main()

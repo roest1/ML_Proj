@@ -1,44 +1,55 @@
-from TrendAgents import HeikinAshiAgent, ParabolicSARAgent, TrendIndicatorAgent
 import yfinance as yf
+import numpy as np
 import pandas as pd
 
-df = yf.download("NVDA")
-
+'''
+Risk and Performance Metrics:
+Cumulative Profit/Loss: Tracks overall profitability.
+Win/Loss Ratio: Tracks how often you win compared to how often you lose.
+Average Win Size vs. Average Loss Size: Measures the profitability of wins relative to losses.
+Drawdown (Max and Rolling): Monitors your largest losses.
+Volatility: Tracks how volatile your portfolio is and how well you are managing risk.
+Trade Frequency: How many trades are executed in a certain time period. This can impact your transaction costs and performance.
+Risk-Adjusted Returns: Use the Sharpe, Sortino, or other ratios to monitor risk-adjusted performance.
 
 '''
-Need to provide reward function
-Need to adjust indicator's parameters dynamically
-- adaptively optimize this later with reinforcement learning
-Need to aggregate all signals and weigh them individually based on market conditions
-'''
+class MainAgent:
+    def __init__(self, df, trend_agent, momentum_agent, volume_agent, volatility_agent):
+        self.df = df
+        self.trend_agent = trend_agent
+        self.momentum_agent = momentum_agent
+        self.volume_agent = volume_agent
+        self.volatility_agent = volatility_agent
 
+    def aggregate_signals(self, window_size):
+        """
+        Aggregates signals from all sub-agents over a sliding window.
+        
+        (TODO) dynamically adjust window size based on a heuristic
+        """
+        aggregated_signals = []
+        for day in range(window_size, len(self.df)):
+            window_data = self.df.iloc[day - window_size:day]
 
-### Indicator Params - (TODO) Adjusted params dynamically by the agents 
-params_heikin_ashi = {'stop_loss': 3}
-params_parabolic_sar = {'initial_af': 0.02, 'step_af': 0.02, 'end_af': 0.2}
+            trend_signal = self.trend_agent.generate_signal(window_data)
+            momentum_signal = self.momentum_agent.generate_signal(window_data)
+            volume_signal = self.volume_agent.generate_signal(window_data)
+            volatility_signal = self.volatility_agent.generate_signal(
+                window_data)
 
-heikin_ashi_agent = HeikinAshiAgent(df, params_heikin_ashi)
-parabolic_sar_agent = ParabolicSARAgent(df, params_parabolic_sar)
+            # Aggregating signals (e.g., summing signals or using a weighted voting system)
+            total_signal = trend_signal + momentum_signal + volume_signal + volatility_signal
+            aggregated_signals.append(self.make_trading_decision(total_signal))
 
+        return aggregated_signals
 
-trend_agent = TrendIndicatorAgent(df, {
-    'heikin_ashi': heikin_ashi_agent,
-    'parabolic_sar': parabolic_sar_agent,
-})
-
-
-### (TODO) Add other indicator classes similarly
-
-
-overall_signals = trend_agent.generate_signals()
-
-# Adjust parameters based on market conditions
-market_conditions = {'volatility': 1.8, 'trend_strength': 0.9}
-trend_agent.adjust_all_parameters(market_conditions)
-
-# Aggregate signals and make the final decision
-final_decision = trend_agent.aggregate_signals()
-
-### (TODO) Add main agent class to aggregate signals from trend, momentum, volatility, and volume indicator agents
-
-print(f"Final Decision: {final_decision}")
+    def make_trading_decision(self, total_signal):
+        """
+        Based on the combined signal, make a buy/sell/hold decision.
+        """
+        if total_signal > 1:
+            return "buy"
+        elif total_signal < -1:
+            return "sell"
+        else:
+            return "hold"
