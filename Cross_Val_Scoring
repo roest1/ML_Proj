@@ -1,7 +1,6 @@
 
 #suggestion:  if using juypter notebook use the ##### markings as a seperat cell 
-k_folds = KFold(n_splits= 10)
-
+k_folds = KFold(n_splits=10, shuffle = True, random_state=42) 
 reg = LinearRegression()
 
 scores = cross_val_score(reg, X,y, scoring='neg_mean_squared_error',cv=k_folds)
