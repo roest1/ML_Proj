@@ -1,0 +1,93 @@
+
+#suggestion:  if using juypter notebook use the ##### markings as a seperat cell 
+k_folds = KFold(n_splits= 10)
+
+reg = LinearRegression()
+
+scores = cross_val_score(reg, X,y, scoring='neg_mean_squared_error',cv=k_folds)
+
+print("Closer or smaller vaule to 0 means better")
+print("Cross Validation Scores:", scores)
+
+print("Mean Accuracy: ", scores.mean())
+
+
+
+
+########
+reg = LogisticRegression()
+scoresSecond = cross_val_score(reg, X,y, scoring='accuracy',cv=k_folds)
+print("Scores are a percentage of correctly predicted samples")
+print("Cross Validation Scores:", scoresSecond)
+
+print("Mean Accuracy: ", scoresSecond.mean())
+
+
+
+######
+from sklearn.base import BaseEstimator, ClassifierMixin
+import torch
+import torch.optim as optim
+import torch.nn as nn
+import numpy as np
+
+class NeuralNetSklearnWrapper(BaseEstimator, ClassifierMixin):
+    def __init__(self, num_input_features, hidden_neurons=32, num_epochs=250, learning_rate=0.01):
+        self.num_input_features = num_input_features
+        self.hidden_neurons = hidden_neurons
+        self.num_epochs = num_epochs
+        self.learning_rate = learning_rate
+        self.model = NeuralNet(num_input_features, hidden_neurons)
+        self.classes_ = None  # This will store the class labels
+
+    def fit(self, X, y):
+        # Fit the model and set the classes_ attribute
+        X_tensor = torch.tensor(X.values, dtype=torch.float32)
+        y_tensor = torch.tensor(y.values, dtype=torch.float32).unsqueeze(1)
+
+        optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        criterion = nn.BCELoss()
+
+        for epoch in range(self.num_epochs):
+            self.model.train()
+            optimizer.zero_grad()
+            y_pred = self.model(X_tensor)
+            loss = criterion(y_pred, y_tensor)
+            loss.backward()
+            optimizer.step()
+
+        # After fitting, store the class labels in classes_
+        self.classes_ = np.unique(y.values)
+
+        return self
+
+    def predict(self, X):
+        # Convert data to tensor and make predictions
+        X_tensor = torch.tensor(X.values, dtype=torch.float32)
+        self.model.eval()
+        with torch.no_grad():
+            y_pred = self.model(X_tensor)
+            return (y_pred.numpy() > 0.5).astype(int)  # Threshold at 0.5 for binary classification
+
+    def predict_proba(self, X):
+        # Return the probabilities for the positive class
+        X_tensor = torch.tensor(X.values, dtype=torch.float32)
+        self.model.eval()
+        with torch.no_grad():
+            y_pred = self.model(X_tensor)
+            return np.hstack([1 - y_pred.numpy(), y_pred.numpy()])  # Probabilities for both classes
+######
+
+# Use your data
+X = data.drop('target', axis=1)
+y = data['target']
+
+# Wrap the model
+model = NeuralNetSklearnWrapper(num_input_features=X.shape[1])
+
+# Use cross_val_score for cross-validation
+scores = cross_val_score(model, X, y, cv=10, scoring='accuracy')
+print("Scores are a percent of correctly predicted samples")
+print(f"Cross-validation scores: {scores}")
+print(f"Mean accuracy: {scores.mean()}")
+
