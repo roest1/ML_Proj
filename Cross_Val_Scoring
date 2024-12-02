@@ -77,17 +77,16 @@ class NeuralNetSklearnWrapper(BaseEstimator, ClassifierMixin):
             y_pred = self.model(X_tensor)
             return np.hstack([1 - y_pred.numpy(), y_pred.numpy()])  # Probabilities for both classes
 ######
-
-# Use your data
 X = data.drop('target', axis=1)
 y = data['target']
 
 # Wrap the model
 model = NeuralNetSklearnWrapper(num_input_features=X.shape[1])
 
+k_folds = KFold(n_splits=10, shuffle = True, random_state=42) 
+
 # Use cross_val_score for cross-validation
-scores = cross_val_score(model, X, y, cv=10, scoring='accuracy')
+scores = cross_val_score(model, X, y, cv=k_folds, scoring='accuracy')
 print("Scores are a percent of correctly predicted samples")
 print(f"Cross-validation scores: {scores}")
 print(f"Mean accuracy: {scores.mean()}")
-
