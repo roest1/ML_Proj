@@ -1,4 +1,1 @@
-# ML Proj
-
-The notebook contains code that fetches economic and fundamental data from APIs. 
-
+https://www.kaggle.com/code/mragpavank/heart-disease-uci/notebook
