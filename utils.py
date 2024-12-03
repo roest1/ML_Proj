@@ -11,7 +11,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.neighbors import KernelDensity
-from sklearn.metrics import roc_auc_score, roc_curve, accuracy_score, classification_report, log_loss
+from sklearn.metrics import roc_auc_score, roc_curve, accuracy_score, classification_report, log_loss, precision_score, f1_score, recall_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -170,7 +170,6 @@ def RunLogisticRegression(X_train, y_train, X_test, y_test, max_iter=10):
     print(f"Logistic Regression Model Test Accuracy = {accuracy_score(y_test, pred):.2f}\n")
     print(classification_report(y_test, pred))
 
-
 class NeuralNet(torch.nn.Module):
     def __init__(self, num_input_features, hidden_neurons=64):
         super(NeuralNet, self).__init__()
@@ -268,5 +267,7 @@ def RunNeuralNetwork(X_train:pd.DataFrame, y_train:pd.Series, X_val:pd.DataFrame
         y_test_pred_class_np = y_test_pred_class.cpu().numpy()
         y_test_tensor_np = y_test_tensor.cpu().numpy()
         print(classification_report(y_test_tensor_np, y_test_pred_class_np))
+
+
 ##################################
     
